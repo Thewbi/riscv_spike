@@ -50,6 +50,28 @@ Goto Devices > "Insert Guest Additions CD Image..."
 Goto Devices > Shared Clipboard > Bidirectional
 
 
+# Share a folder
+
+1. Devices > Shared Folders > Shared Folder Settings.
+2. Add a shared folder with automount and the /mnt as mountpoint
+3. FolderPath: C:\Users\lapto\Downloads
+4. FolderName: Downloads
+
+Template for a mount command (replace <FolderName> by the FolderName
+that you used when creating the shared folder record.
+```
+sudo mount -t vboxsf <FolderName> /mnt
+```
+
+example:
+```
+sudo mount -t vboxsf Downloads /mnt
+```
+
+No files copied into /mnt on the guest are available in the Downloads
+folder of the host and vice-versa.
+
+
 # Protip
 
 There is no need to compile the RISCV GNU Toolchain yourself.

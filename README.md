@@ -38,6 +38,11 @@ https://superuser.com/questions/1318231/why-doesnt-clipboard-sharing-work-with-u
 ```
 sudo apt-get update
 sudo apt-get install virtualbox-guest-x11
+```
+
+Now everytime you reboot the virtualbox and want to use the bidirectional clipboard, execute
+
+```
 sudo VBoxClient --clipboard
 ```
 
@@ -91,6 +96,7 @@ riscv32-unknown-elf-as
 
 https://github.com/riscv-collab/riscv-gnu-toolchain
 
+```
 sudo apt-get install autoconf automake autotools-dev curl python3 python3-pip python3-tomli libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev ninja-build git cmake libglib2.0-dev libslirp-dev
 
 cd ~/dev/riscv
@@ -109,6 +115,7 @@ cd ~/dev/riscv/riscv-gnu-toolchain
 ./configure --prefix=/opt/riscv --with-arch=rv32gvc --with-abi=ilp32d
 
 sudo make
+```
 
 
 
@@ -128,8 +135,11 @@ cd rvv_example
 make
 ```
 
+```
 riscv64-unknown-elf-gcc -O main.c vec.S -o main -march=rv32gcv_zba -lm
 riscv64-unknown-elf-objdump -d main > main.lst
+```
+
 
 ```
 # void vec_len_rvv(float *r, struct pt *pts, int n)
@@ -349,3 +359,53 @@ Hit enter to execute a single instruction at a time
 
 
 https://riscv.epcc.ed.ac.uk/documentation/how-to/first_vector_prog/
+
+
+
+# Berkeley Host-Target Interface (HTIF)
+
+https://github.com/riscv-software-src/riscv-isa-sim/issues/195
+https://github.com/ucb-bar/libgloss-htif
+https://github.com/riscv-boom/riscv-coremark/blob/master/riscv64-baremetal/syscalls.c
+
+
+
+
+# Spike without PK
+
+The Proxy Kernel is a layer of operating system which provides system calls.
+
+It is possible to use Spike with baremetal assembler code without PK.
+Here is a repository with example code: https://github.com/ilya-sotnikov/riscv-asm-spike
+
+You need to update the makefile and provide the prefix to your toolchain installation:
+
+```
+TOOLCHAIN_PREFIX := /opt/riscv/bin/riscv64-unknown-elf
+```
+
+Also change the RV_ARCH argument: 
+
+```
+RV_ARCH := rv64gcv_zba
+```
+
+Then build the sample
+
+```
+make
+```
+
+The binary is placed into the target folder.
+
+Run Spike on the sample without the pk parameter.
+
+```
+spike --isa=rv64imafcv_Zba_Zbb_Zbc_Zbs target/main 
+```
+
+
+```
+spike -d --isa=rv64imafcv_Zba_Zbb_Zbc_Zbs target/main 
+```
+

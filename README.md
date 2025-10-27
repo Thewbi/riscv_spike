@@ -437,6 +437,27 @@ spike -d --isa=rv64imafcv_Zba_Zbb_Zbc_Zbs target/main
 
 
 
+
+
+
+# Spike 
+
+https://github.com/riscv-software-src/riscv-isa-sim/issues/145
+
+All processors start execution at DEFAULT_RSTVEC. This is hardcoded to 0x1000 in encoding.h
+
+Spike places a boot_rom device at the reset location. This boot_rom contains the reset vector code, followed by the binary device tree data.
+
+The reset vector is a small sequence of code, only 8 instructions, that does the following:
+
+- Load a0 with the value of the processor's mhartid CSR
+- Load a1 with the address of the binary device tree data
+- Load t0 with the value of start_pc, then unconditionally jump to that location
+
+While the user cannot (currently) alter this boot code sequence, they do have control over the value of start_pc. If the user provides an alternate entry point on the command line, then this will be used. Otherwise, start_pc is initialized with the value of the _entry symbol found in the ELF file.
+
+
+
 # RISC-V Vector Extension Tutorial
 
 Disclaimer: the code for the tutorials is based on https://github.com/ilya-sotnikov/riscv-asm-spike
@@ -486,7 +507,7 @@ vreg 0 2
 
 These commands will print the vector register v0, v1 and v2 of the first hart.
 
-## Loading data into the Vector Extension Registers
+## 01 - Loading data into the Vector Extension Registers
 
 The vlevXY.v command is used to load data from memory into the registers
 
@@ -604,7 +625,7 @@ The spike simulator is terminated using the *quit* command.
 (spike) quit
 ```
 
-## Adding two Vectors
+## 02 - Adding two Vectors
 
 The vadd.vv instruction is used to add vectors together.
 
@@ -635,6 +656,7 @@ main:
 
 
 
+    # load the address of the testdata into register a1, a2 and a3
     la a1, testdata + 0
     la a2, testdata + 16
 
@@ -724,3 +746,72 @@ The spike simulator is stopped using quit.
 ```
 (spike) quit
 ```
+
+## 03 - Strip Mining
+
+Strip Mining is iterating over large vectors that are too large to fit into the vector registers of the vector extension. In each interation, a fraction of the large vector is placed into the vector extension registers and the requested operation (add, sub, ...) is performed on the subset, until the large vectors are processed overall.
+
+An important question is how to deal with the situation in which the large vector is not a full multiple of the vector register size. Meaning in the last iteration, only a small amount of elements need to processed. In order to take care of this case, in strip mining the vsetvli instruction is called in each iteration and not only once at the beginning.
+
+The idea of calling vsetvli each iteration is that in each iteration the user specifies the amount of elements that are left for processing via the second parameter to vsetvli and the vector engine returns the amount of elements it will process this iteration via the first parameter of vsetvli.
+
+Let's run the example in Spike.
+
+Single step until the following instruction is executed:
+
+```
+la a1, testdata + 0
+```
+
+First, once single stepping has reached the load of vector 0's address into a0 display the address that is now stored in register a1.
+
+```
+(spike) reg 0 a1
+0x00000000800034a0
+```
+
+You need very sharp eyes to read this address! You need to be able to tell zeroes apart from eights. The address above is: 0x800034a0. The easisest way is to just copy the entire address so you do not make any mistakes typeing in the address later.
+
+Now let's check what data is stored at that address:
+
+```
+(spike) mem 0 0x800034a0
+0x0807060504030201
+```
+
+These are the first 64 bits of testdata as expected.
+
+We can use what we just learn about memory after the strip mining is done in order to check that strip mining has computed correct results.
+
+Because the pointer to the result data is stored in a3 and a3 is moved as strip mining progresses, it is important to read the address of a3 before strip mining begins so we can learn about the address where the result data is stored before the pointer to the result data is moved around.
+
+Retrieve the address of the result symbol where the result will be stored.
+The address is stored in register a3.
+
+```
+(spike) reg 0 a3
+0x00000000800030a0
+```
+
+Single step until the entire strip mining of all 12 values has been performed.
+
+Now check the data at the address
+
+```
+(spike) mem 0 0x800030a0
+0x100e0c0a08060402
+(spike) mem 0 0x800030a8
+0x22201c1a18161412
+(spike) mem 0 0x800030b0
+0x32302e2c2a282624
+(spike) mem 0 0x800030b8
+0x42403e3c3a383634
+(spike) mem 0 0x800030c0
+0x52504e4c4a484644
+(spike) mem 0 0x800030c8 
+0x62605e5c5a585654
+(spike) mem 0 0x800030d0
+0x0000000000000000
+```
+
+This shows that strip mining has succesfully added all data of the large vectors using the vector registers of the vector extension.

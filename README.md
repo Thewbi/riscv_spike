@@ -705,3 +705,22 @@ VLEN=128 bits; ELEN=64 bits
 v2  : [1]: 0x22201c1a18161412  [0]: 0x100e0c0a08060402  
 (spike) 
 ```
+
+As we can see from the output, the source registers v0 and v1 have both been loaded
+with the numbers 0x01, 0x02, ..., 0x11.
+
+The add operation is performed and the result is placed into the target reguster v2.
+
+The register v2 is output. The resulting value is:
+
+```
+v2  : [1]: 0x22201c1a18161412  [0]: 0x100e0c0a08060402
+```
+
+This means that the individual elements have been added by the vectored vadd.vv instruction.
+
+The spike simulator is stopped using quit.
+
+```
+(spike) quit
+```

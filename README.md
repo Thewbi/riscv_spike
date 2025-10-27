@@ -439,6 +439,8 @@ spike -d --isa=rv64imafcv_Zba_Zbb_Zbc_Zbs target/main
 
 # RISC-V Vector Extension Tutorial
 
+Disclaimer: the code for the tutorials is based on https://github.com/ilya-sotnikov/riscv-asm-spike
+
 This section will enable you to use RISC-V vector instructions with the Spike Simulator on an Ubuntu Linux system.
 The earlier parts contained instructions on how to install the Spike simulator.
 This section will provide assembly code that makes use of the Vector Extension.

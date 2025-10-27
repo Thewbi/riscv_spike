@@ -597,3 +597,111 @@ v0  : [1]: 0x8344c0aa5b761295  [0]: 0x30ac75dc32808aa4
 
 After executing *vle32.v v0, (a1)* and printing it *vreg 0 0*, 
 the content of the v0 register matches the test data exactly.
+
+The spike simulator is terminated using the *quit* command.
+
+```
+(spike) quit
+```
+
+## Adding two Vectors
+
+The vadd.vv instruction is used to add vectors together.
+
+Do not confuse the *vadd.vv* instruction with the *vaadd.vv* instruction!
+*vaadd.vv* is an instruction that performs averaging while adding.
+I do not know what that even means but the takeaway is to not accidently
+execute vaadd.vv when you want to really execute vadd.vv.
+
+First, load two registers with test data to add.
+
+```
+.section .text
+
+    .globl main
+main:
+    addi sp, sp, -8
+    sd ra, 0(sp)
+
+
+
+
+    # Vector-Extension (RVV, V) must be enabled first
+    csrr    t0, mstatus
+    li      t1, 0x600       # bits 9 and 10 to 1 which is a bitmask of 0x600
+    or      t1, t1, t0
+    csrw    mstatus, t1
+
+
+
+
+    la a1, testdata + 0
+    la a2, testdata + 16
+
+    la a3, resultdata + 0
+
+
+
+
+    # use max length, fill the entire vector register
+    vsetvli t0, x0, e32, m1, ta, ma         
+
+    # Encoded Element Width (EEW) = 32 because of the mnemonic vle32.v
+    # Implementation’s smallest supported SEW size in bytes (SEW_MIN/8).
+
+    vle32.v v0, (a1)                # Get first vector
+    vle32.v v1, (a2)                # Get second vector
+
+    vadd.vv v2, v0, v1              # Sum vectors
+    
+    vse32.v v2, (a3)                # Store result
+
+
+
+
+
+    .align 5
+resultdata:
+    .zero 1024
+
+    .align 5
+testdata:
+    .quad 0x0807060504030201
+    .quad 0x11100E0D0C0B0A09
+
+    .quad 0x0807060504030201
+    .quad 0x11100E0D0C0B0A09
+```
+
+Running Spike on the elf file 
+
+```
+spike -d --isa=rv64imafcv_Zba_Zbb_Zbc_Zbs target/main
+```
+
+yields the following output
+
+```
+core   0: >>>>  vvaddint32
+core   0: 0x0000000080002154 (0x0d0072d7) vsetvli t0, zero, e32, m1, ta, ma
+(spike) 
+core   0: 0x0000000080002158 (0x0205e007) vle32.v v0, (a1)
+(spike) 
+core   0: 0x000000008000215c (0x02066087) vle32.v v1, (a2)
+(spike) 
+core   0: 0x0000000080002160 (0x02008157) vadd.vv v2, v0, v1
+(spike) 
+core   0: 0x0000000080002164 (0x0206e127) vse32.v v2, (a3)
+(spike) 
+core   0: 0x0000000080002168 (0x00006082) c.ldsp  ra, 0(sp)
+(spike) vreg 0 0
+VLEN=128 bits; ELEN=64 bits
+v0  : [1]: 0x11100e0d0c0b0a09  [0]: 0x0807060504030201  
+(spike) vreg 0 1
+VLEN=128 bits; ELEN=64 bits
+v1  : [1]: 0x11100e0d0c0b0a09  [0]: 0x0807060504030201  
+(spike) vreg 0 2
+VLEN=128 bits; ELEN=64 bits
+v2  : [1]: 0x22201c1a18161412  [0]: 0x100e0c0a08060402  
+(spike) 
+```

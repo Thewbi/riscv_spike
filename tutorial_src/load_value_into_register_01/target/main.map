@@ -1,0 +1,119 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x0000000080000000                . = 0x80000000
+
+.tohost         0x0000000080000000       0xc0
+ *(.tohost)
+ .tohost        0x0000000080000000       0xc0 target/syscalls.o
+                0x0000000080000000                tohost
+                0x0000000080000040                fromhost
+                0x00000000800010c0                . = (. + 0x1000)
+
+.text           0x0000000080002000      0x4aa
+ *(.text)
+ .text          0x0000000080002000      0x112 target/lib.o
+                0x0000000080002000                print_char
+                0x0000000080002024                str_len
+                0x0000000080002038                print_str_ln
+                0x0000000080002068                print_hex_ln
+                0x00000000800020aa                print_unsigned_ln
+                0x00000000800020dc                print_signed_ln
+                0x00000000800020fe                mtime_get
+                0x0000000080002108                mtimecmp_set
+ .text          0x0000000080002112        0x0 target/macro.o
+ .text          0x0000000080002112       0x5c target/main.o
+                0x0000000080002112                main
+ .text          0x000000008000216e        0x0 target/regs.o
+ .text          0x000000008000216e        0x0 target/startup.o
+ .text          0x000000008000216e       0x56 target/syscalls.o
+                0x000000008000216e                tohost_exit
+                0x0000000080002182                syscall
+ .text          0x00000000800021c4      0x2a2 target/trap.o
+                0x0000000080002352                trap_setup
+                0x000000008000238e                irq_mtimer_handler
+ .text          0x0000000080002466       0x2e target/example.o
+                0x0000000080002466                c_function
+ *(.text.init)
+ .text.init     0x0000000080002494       0x16 target/startup.o
+                0x0000000080002494                _start
+
+.rodata.str1.8  0x00000000800024b0       0x1f
+ .rodata.str1.8
+                0x00000000800024b0       0x1f target/example.o
+
+.rela.dyn       0x00000000800024d0        0x0
+ .rela.text.init
+                0x00000000800024d0        0x0 target/lib.o
+
+.data           0x0000000080003000      0x540
+ *(.data)
+ .data          0x0000000080003000        0x0 target/lib.o
+ .data          0x0000000080003000        0x0 target/macro.o
+ .data          0x0000000080003000      0x4e8 target/main.o
+                0x0000000080003062                msg_sep
+ .data          0x00000000800034e8        0x0 target/regs.o
+ .data          0x00000000800034e8        0x0 target/startup.o
+ .data          0x00000000800034e8        0x0 target/syscalls.o
+ .data          0x00000000800034e8       0x58 target/trap.o
+ .data          0x0000000080003540        0x0 target/example.o
+
+.bss            0x0000000080003540        0x0
+ .bss           0x0000000080003540        0x0 target/lib.o
+ .bss           0x0000000080003540        0x0 target/macro.o
+ .bss           0x0000000080003540        0x0 target/main.o
+ .bss           0x0000000080003540        0x0 target/regs.o
+ .bss           0x0000000080003540        0x0 target/startup.o
+ .bss           0x0000000080003540        0x0 target/syscalls.o
+ .bss           0x0000000080003540        0x0 target/trap.o
+ .bss           0x0000000080003540        0x0 target/example.o
+
+.stack          0x0000000080004000    0x20000
+                0x0000000080004000                _estack = .
+                0x0000000080024000                . = (. + 0x20000)
+ *fill*         0x0000000080004000    0x20000 
+                0x0000000080024000                _sstack = .
+LOAD target/lib.o
+LOAD target/macro.o
+LOAD target/main.o
+LOAD target/regs.o
+LOAD target/startup.o
+LOAD target/syscalls.o
+LOAD target/trap.o
+LOAD target/example.o
+OUTPUT(target/main elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0xd5
+ .riscv.attributes
+                0x0000000000000000       0xcf target/lib.o
+ .riscv.attributes
+                0x00000000000000cf       0xcf target/macro.o
+ .riscv.attributes
+                0x000000000000019e       0xd3 target/main.o
+ .riscv.attributes
+                0x0000000000000271       0xcf target/regs.o
+ .riscv.attributes
+                0x0000000000000340       0xcf target/startup.o
+ .riscv.attributes
+                0x000000000000040f       0xcf target/syscalls.o
+ .riscv.attributes
+                0x00000000000004de       0xd3 target/trap.o
+ .riscv.attributes
+                0x00000000000005b1       0xd1 target/example.o
+
+.comment        0x0000000000000000       0x19
+ .comment       0x0000000000000000       0x19 target/example.o
+                                         0x1a (size before relaxing)
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 target/example.o
